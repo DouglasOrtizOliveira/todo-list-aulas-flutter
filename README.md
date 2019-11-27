@@ -4,7 +4,7 @@
 
 <p align="center">
     <img src="https://github.com/DouglasOrtizOliveira/todo-list-aulas-flutter/blob/master/images/Screenshot_20191127-000955.png" width="250"/>
-    <img src="https://github.com/DouglasOrtizOliveira/todo-list-aulas-flutter/blob/master/images/Screenshot_20191127-001201.png" width="250"/>
+    <img src="https://github.com/DouglasOrtizOliveira/todo-list-aulas-flutter/blob/master/images/Screenshot_20191127-141102.png" width="250"/>
     <img src="https://github.com/DouglasOrtizOliveira/todo-list-aulas-flutter/blob/master/images/Screenshot_20191127-005034.png" width="250"/>
 </p>
 
