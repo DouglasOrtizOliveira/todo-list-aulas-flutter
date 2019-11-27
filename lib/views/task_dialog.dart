@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/models/task.dart';
+import 'package:find_dropdown/find_dropdown.dart';
+
 
 class TaskDialog extends StatefulWidget {
   final Task task;
@@ -11,8 +13,11 @@ class TaskDialog extends StatefulWidget {
 }
 
 class _TaskDialogState extends State<TaskDialog> {
+
+  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  String _priority;
 
   Task _currentTask = Task();
 
@@ -26,7 +31,9 @@ class _TaskDialogState extends State<TaskDialog> {
 
     _titleController.text = _currentTask.title;
     _descriptionController.text = _currentTask.description;
+    _priority = _currentTask.priority;
   }
+ 
 
   @override
   void dispose() {
@@ -38,19 +45,48 @@ class _TaskDialogState extends State<TaskDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      
       title: Text(widget.task == null ? 'Nova tarefa' : 'Editar tarefas'),
-      content: Column(
+      content: Form(
+        key: _formKey,
+        child: Column(
+        
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          TextField(
+           new TextFormField(
               controller: _titleController,
               decoration: InputDecoration(labelText: 'Título'),
-              autofocus: true),
-          TextField(
+              autofocus: true,
+              validator: (value) {
+              if (value.isEmpty) {
+               return 'Insira um título';
+              }
+                 return null;}
+              ),
+         
+          TextFormField(
+              keyboardType: TextInputType.multiline,
               controller: _descriptionController,
-              decoration: InputDecoration(labelText: 'Descrição')),
+              decoration: InputDecoration(labelText: 'Descrição'
+              ),
+             maxLines: null,
+             validator: (value) {
+             if (value.isEmpty) {
+             return 'Insira uma descrição';
+            }
+            return null;}),
+             
+         FindDropdown(
+          items: ["1: Sem Prioridade", "2: Baixa Prioridade", "3: Media Prioridade", "4: Acima do Normal", "5: Alta Prioridade"],
+          label: "Prioridade",
+            onChanged: (String item) => print(_priority),
+            selectedItem: _priority,
+              ),
+
+              
         ],
+      ),
       ),
       actions: <Widget>[
         FlatButton(
@@ -62,10 +98,12 @@ class _TaskDialogState extends State<TaskDialog> {
         FlatButton(
           child: Text('Salvar'),
           onPressed: () {
+            if (_formKey.currentState.validate()) {
             _currentTask.title = _titleController.value.text;
             _currentTask.description = _descriptionController.text;
-
+            _currentTask.priority = _priority;
             Navigator.of(context).pop(_currentTask);
+            }
           },
         ),
       ],

@@ -1,6 +1,7 @@
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:todo_list/helpers/task_helper.dart';
 import 'package:todo_list/models/task.dart';
 import 'package:todo_list/views/task_dialog.dart';
@@ -11,17 +12,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Task> _taskList = [];
-  TaskHelper _helper = TaskHelper();
-  bool _loading = true;
+  List<Task> _listatarefas = [];
+  TaskHelper _var = TaskHelper();
+  bool _carregando = true;
+  double _indicador = 0;
+  double _porcentagem = 0;
+  int _checkTarefas = 0;
 
   @override
   void initState() {
     super.initState();
-    _helper.getAll().then((list) {
+    _var.getAll().then((list) {
       setState(() {
-        _taskList = list;
-        _loading = false;
+        _listatarefas = list;
+        _carregando = false;
       });
     });
   }
@@ -29,38 +33,77 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Lista de Tarefas')),
-      floatingActionButton:
-          FloatingActionButton(child: Icon(Icons.add), onPressed: _addNewTask),
-      body: _buildTaskList(),
+      appBar: AppBar(
+        title: Text('Lista de Tarefas'),
+        backgroundColor: Colors.blue,
+        actions: <Widget>[
+          new CircularPercentIndicator(
+            radius: 50.0,
+            lineWidth: 5.0,
+            animation: true,
+            percent: _indicador,
+            center: new Text(
+              "Concluidas",
+              style: new TextStyle(
+                  fontWeight: FontWeight.normal,
+                  fontSize: 8.0,
+                  color: Colors.white),
+            ),
+            backgroundColor: Colors.white,
+            progressColor: Colors.green,
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
+          backgroundColor: Colors.blue,
+          onPressed: _addNewTask),
+      body: _buildListaTarefas(),
     );
   }
 
-  Widget _buildTaskList() {
-    if (_taskList.isEmpty) {
+  Widget _buildListaTarefas() {
+    if (_listatarefas.isEmpty) {
       return Center(
-        child: _loading ? CircularProgressIndicator() : Text("Sem tarefas!"),
+        child: _carregando ? CircularProgressIndicator() : Text("Sem tarefas!"),
       );
     } else {
-      return ListView.builder(
+      return ListView.separated(
+        separatorBuilder: (BuildContext context, int index) => Divider(),
+        itemCount: _listatarefas.length,
         itemBuilder: _buildTaskItemSlidable,
-        itemCount: _taskList.length,
       );
     }
   }
 
   Widget _buildTaskItem(BuildContext context, int index) {
-    final task = _taskList[index];
+    final task = _listatarefas[index];
     return CheckboxListTile(
       value: task.isDone,
       title: Text(task.title),
-      subtitle: Text(task.description),
+      subtitle: Text('${task.description} ${task.priority}'),
       onChanged: (bool isChecked) {
         setState(() {
+          _porcentagem = 1.0 / _listatarefas.length;
+          if (isChecked) {
+            _checkTarefas++;
+            if (_indicador + _porcentagem > 1.0) {
+              _indicador = 1.0;
+            } else
+              _indicador += _porcentagem;
+          } else if (isChecked == false) {
+            _checkTarefas--;
+            if (_checkTarefas == 0) {
+              _indicador = 0.0;
+            } else if (_indicador - _porcentagem < 0.0) {
+              _indicador = 0.0;
+            } else
+              _indicador -= _porcentagem;
+          }
           task.isDone = isChecked;
         });
 
-        _helper.update(task);
+        _var.update(task);
       },
     );
   }
@@ -76,7 +119,7 @@ class _HomePageState extends State<HomePage> {
           color: Colors.blue,
           icon: Icons.edit,
           onTap: () {
-            _addNewTask(editedTask: _taskList[index], index: index);
+            _addNewTask(editedTask: _listatarefas[index], index: index);
           },
         ),
         IconSlideAction(
@@ -84,7 +127,11 @@ class _HomePageState extends State<HomePage> {
           color: Colors.red,
           icon: Icons.delete,
           onTap: () {
-            _deleteTask(deletedTask: _taskList[index], index: index);
+            _deleteTask(deletedTask: _listatarefas[index], index: index);
+            if(_indicador - _porcentagem < 0.0){_indicador = 0.0;}
+            else
+            _indicador -= _porcentagem;
+            _checkTarefas--;
           },
         ),
       ],
@@ -103,11 +150,11 @@ class _HomePageState extends State<HomePage> {
     if (task != null) {
       setState(() {
         if (index == null) {
-          _taskList.add(task);
-          _helper.save(task);
+          _listatarefas.add(task);
+          _var.save(task);
         } else {
-          _taskList[index] = task;
-          _helper.update(task);
+          _listatarefas[index] = task;
+          _var.update(task);
         }
       });
     }
@@ -115,10 +162,10 @@ class _HomePageState extends State<HomePage> {
 
   void _deleteTask({Task deletedTask, int index}) {
     setState(() {
-      _taskList.removeAt(index);
+      _listatarefas.removeAt(index);
     });
 
-    _helper.delete(deletedTask.id);
+    _var.delete(deletedTask.id);
 
     Flushbar(
       title: "Exclusão de tarefas",
@@ -133,8 +180,8 @@ class _HomePageState extends State<HomePage> {
         ),
         onPressed: () {
           setState(() {
-            _taskList.insert(index, deletedTask);
-            _helper.update(deletedTask);
+            _listatarefas.insert(index, deletedTask);
+            _var.update(deletedTask);
           });
         },
       ),
